@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>在线下单 - 旧羽绒服翻新羽绒被</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#faf7f2;color:#2d2a24;line-height:1.6}
+  .top{background:#1a2a3a;color:#fff;text-align:center;padding:40px 20px 32px;position:relative}
+  .top h1{font-size:22px;font-weight:700}
+  .top h1 span{color:#c8a45c}
+  .top p{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
+  .container{max-width:640px;margin:0 auto;padding:0 16px 40px}
+  .section{background:#fff;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .section h2{font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .section h2 .step{background:#c8a45c;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+
+  /* 商品选择 */
+  .product-grid{display:flex;flex-direction:column;gap:10px}
+  .product-card{position:relative;border:2px solid #e8e4dd;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s}
+  .product-card:active{transform:scale(.98)}
+  .product-card.selected{border-color:#c8a45c;background:linear-gradient(135deg,rgba(200,164,92,.06),rgba(200,164,92,.02))}
+  .product-card .radio{position:absolute;right:14px;top:14px;width:20px;height:20px;border:2px solid #d0ccc2;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .product-card.selected .radio{border-color:#c8a45c}
+  .product-card.selected .radio::after{content:'';width:10px;height:10px;background:#c8a45c;border-radius:50%}
+  .product-card .name{font-size:15px;font-weight:600;color:#1a2a3a;margin-bottom:2px}
+  .product-card .desc{font-size:12px;color:#9a948a}
+  .product-card .price{font-size:17px;font-weight:700;color:#b8860b;margin-top:4px}
+  .product-card .price .u{font-size:12px;font-weight:400;color:#9a948a}
+  .product-card .badge{display:inline-block;background:#e8d5a8;color:#7a6530;font-size:10px;padding:1px 8px;border-radius:3px;margin-left:6px;vertical-align:middle}
+
+  /* 数量选择 */
+  .qty-row{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #f5f3ef}
+  .qty-row label{font-size:13px;color:#5c564c}
+  .qty-btn{width:32px;height:32px;border:1px solid #d0ccc2;border-radius:6px;background:#fff;font-size:18px;color:#1a2a3a;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .qty-btn:active{background:#f5f3ef}
+  .qty-num{font-size:16px;font-weight:600;color:#1a2a3a;min-width:30px;text-align:center}
+
+  /* 加购选项 */
+  .addon{margin-top:12px}
+  .addon-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f3ef;font-size:13px;color:#5c564c}
+  .addon-item:last-child{border:none}
+  .addon-item input[type=checkbox]{width:18px;height:18px;accent-color:#c8a45c;cursor:pointer}
+  .addon-item .ap{color:#b8860b;font-weight:600;margin-left:auto}
+
+  /* 表单 */
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:13px;color:#5c564c;margin-bottom:4px;font-weight:500}
+  .form-group input,.form-group textarea,.form-group select{width:100%;padding:11px 14px;border:1.5px solid #e0dcd1;border-radius:8px;font-size:14px;color:#2d2a24;background:#fafaf8;transition:border .2s;font-family:inherit}
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#c8a45c;background:#fff}
+  .form-group textarea{resize:vertical;min-height:70px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* 合计 */
+  .total-box{background:#f7f3ea;border-radius:10px;padding:16px;margin-top:16px;display:flex;justify-content:space-between;align-items:center}
+  .total-box .label{font-size:14px;color:#5c564c}
+  .total-box .amount{font-size:22px;font-weight:700;color:#b8860b}
+  .total-box .amount .u{font-size:14px;font-weight:400}
+
+  /* 提交按钮 */
+  .submit-btn{display:block;width:100%;padding:16px;background:#c8a45c;color:#1a2a3a;border:none;border-radius:30px;font-size:18px;font-weight:700;cursor:pointer;margin-top:20px;transition:transform .15s}
+  .submit-btn:active{transform:scale(.97)}
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* 提交后页面 */
+  .result-page{display:none}
+  .result-page.active{display:block}
+  .result-card{background:#fff;border-radius:12px;padding:24px 20px;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);text-align:center}
+  .result-card .icon{font-size:48px;margin-bottom:12px}
+  .result-card h2{font-size:18px;color:#1a2a3a;margin-bottom:4px}
+  .result-card p{font-size:13px;color:#5c564c;line-height:1.7}
+  .result-card .order-summary{background:#faf7f2;border-radius:8px;padding:14px;margin:14px 0;text-align:left;font-size:13px;color:#5c564c;line-height:1.8}
+  .result-card .order-summary strong{color:#1a2a3a}
+  .payment-box{background:#f7f3ea;border:2px dashed #c8a45c;border-radius:12px;padding:20px;margin:16px 0;text-align:center}
+  .payment-box .qrcode-placeholder{width:180px;height:180px;background:#fff;margin:0 auto 12px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:#9a948a;border:1px solid #e0dcd1}
+  .payment-box .qrcode-placeholder .emoji-big{font-size:40px;margin-bottom:4px}
+  .payment-box .amount-big{font-size:28px;font-weight:700;color:#b8860b;margin:8px 0}
+  .payment-box p{font-size:13px;color:#5c564c}
+  .wechat-contact{display:inline-flex;align-items:center;gap:8px;background:#1a2a3a;color:#fff;padding:12px 28px;border-radius:30px;text-decoration:none;font-size:15px;font-weight:600;margin-top:12px}
+  .back-link{display:inline-block;margin-top:16px;font-size:13px;color:#9a948a;text-decoration:none}
+
+  /* 顶部导航 */
+  .nav-back{display:flex;align-items:center;gap:6px;color:#9a948a;text-decoration:none;font-size:13px;padding:12px 0 0}
+  .form-page{display:block}
+  .form-page.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- ========== 表单页面 ========== -->
+<div class="form-page" id="formPage">
+<div class="top">
+  <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:8px"><a href="./翻新流程说明.html" style="color:rgba(255,255,255,.4)">← 返回流程说明</a></p>
+  <h1>在线 <span>下单</span></h1>
+  <p>选择商品 · 填写信息 · 完成支付</p>
+</div>
+
+<div class="container">
+
+  <!-- 第一步：选择商品 -->
+  <div class="section">
+    <h2><span class="step">1</span> 选择被子</h2>
+    <div class="product-grid" id="productGrid">
+      <div class="product-card" data-name="单人翻新羽绒被" data-price="580" data-desc="1.5m×2.0m，适合单人床">
+        <div class="radio"></div>
+        <div class="name">单人翻新羽绒被</div>
+        <div class="desc">1.5m×2.0m · 适合单人床</div>
+        <div class="price">580 <span class="u">元起</span></div>
+      </div>
+      <div class="product-card selected" data-name="标准双人翻新羽绒被" data-price="780" data-desc="2.0m×2.3m，最适合家用">
+        <div class="radio"></div>
+        <div class="name">标准双人翻新羽绒被 <span class="badge">推荐</span></div>
+        <div class="desc">2.0m×2.3m · 适合双人床，最受欢迎</div>
+        <div class="price">780 <span class="u">元起</span></div>
+      </div>
+      <div class="product-card" data-name="加厚双人翻新羽绒被" data-price="980" data-desc="2.0m×2.3m，适合怕冷/无暖气">
+        <div class="radio"></div>
+        <div class="name">加厚双人翻新羽绒被</div>
+        <div class="desc">2.0m×2.3m · 充绒量加厚40%，更暖和</div>
+        <div class="price">980 <span class="u">元起</span></div>
+      </div>
+      <div class="product-card" data-name="特大翻新羽绒被" data-price="1180" data-desc="2.2m×2.4m，适合大床/家庭被">
+        <div class="radio"></div>
+        <div class="name">特大翻新羽绒被</div>
+        <div class="desc">2.2m×2.4m · 适合2m大床或家庭盖</div>
+        <div class="price">1180 <span class="u">元起</span></div>
+      </div>
+    </div>
+
+    <div class="qty-row">
+      <label>翻新数量：</label>
+      <button class="qty-btn" id="qtyMinus">−</button>
+      <span class="qty-num" id="qtyDisplay">1</span>
+      <button class="qty-btn" id="qtyPlus">+</button>
+    </div>
+
+    <div class="addon">
+      <div class="addon-item">
+        <input type="checkbox" id="addonFabric" data-price="100">
+        <span>面料升级为贡缎/磨毛</span>
+        <span class="ap">+100元</span>
+      </div>
+      <div class="addon-item">
+        <input type="checkbox" id="addonDown" data-price="120">
+        <span>补充新羽绒 500g（旧衣不够时加）</span>
+        <span class="ap">+120元</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第二步：填写信息 -->
+  <div class="section">
+    <h2><span class="step">2</span> 收货信息</h2>
+    <div class="form-group">
+      <label>收件人姓名 *</label>
+      <input type="text" id="inputName" placeholder="请输入姓名" required>
+    </div>
+    <div class="form-group">
+      <label>手机号码 *</label>
+      <input type="tel" id="inputPhone" placeholder="请输入手机号" maxlength="11" required>
+    </div>
+    <div class="form-group">
+      <label>所在地区 *</label>
+      <select id="inputProvince"><option value="">请选择省份</option><option value="北京">北京</option><option value="天津">天津</option><option value="上海">上海</option><option value="重庆">重庆</option><option value="河北">河北</option><option value="山西">山西</option><option value="辽宁">辽宁</option><option value="吉林">吉林</option><option value="黑龙江">黑龙江</option><option value="江苏">江苏</option><option value="浙江">浙江</option><option value="安徽">安徽</option><option value="福建">福建</option><option value="江西">江西</option><option value="山东">山东</option><option value="河南">河南</option><option value="湖北">湖北</option><option value="湖南">湖南</option><option value="广东">广东</option><option value="广西">广西</option><option value="海南">海南</option><option value="四川">四川</option><option value="贵州">贵州</option><option value="云南">云南</option><option value="西藏">西藏</option><option value="陕西">陕西</option><option value="甘肃">甘肃</option><option value="青海">青海</option><option value="宁夏">宁夏</option><option value="新疆">新疆</option><option value="台湾">台湾</option><option value="香港">香港</option><option value="澳门">澳门</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>城市 *</label>
+        <input type="text" id="inputCity" placeholder="城市名">
+      </div>
+      <div class="form-group">
+        <label>区/县 *</label>
+        <input type="text" id="inputDistrict" placeholder="区/县">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>详细地址 *</label>
+      <input type="text" id="inputAddress" placeholder="街道/小区/门牌号">
+    </div>
+    <div class="form-group">
+      <label>备注（可选）</label>
+      <textarea id="inputNote" placeholder="例如：大概有几件旧羽绒服、希望用什么颜色的被壳面料等"></textarea>
+    </div>
+  </div>
+
+  <!-- 合计 -->
+  <div class="total-box">
+    <span class="label">合计金额</span>
+    <span class="amount" id="totalAmount">780 <span class="u">元</span></span>
+  </div>
+
+  <!-- 提交按钮 -->
+  <button class="submit-btn" id="submitBtn">📋 提交订单</button>
+  <p style="text-align:center;font-size:11px;color:#9a948a;margin-top:8px">提交后我们会通过微信与您确认订单</p>
+</div>
+</div>
+
+<!-- ========== 提交后页面 ========== -->
+<div class="result-page" id="resultPage">
+<div class="container">
+
+<div class="result-card">
+  <div class="icon">✅</div>
+  <h2>订单已提交</h2>
+  <p>请按照以下步骤完成支付，我们收到后会立即安排翻新</p>
+
+  <div class="order-summary" id="orderSummary">
+    <!-- JS动态填充 -->
+  </div>
+
+  <!-- 支付引导 -->
+  <div class="payment-box">
+    <div class="qrcode-placeholder">
+      <div class="emoji-big">💬</div>
+      <p>长按识别/截图扫码</p>
+      <p style="font-size:11px;color:#d0ccc2">加微信完成支付</p>
+    </div>
+    <p style="font-weight:600;color:#1a2a3a">应付金额</p>
+    <div class="amount-big" id="payAmount">780元</div>
+    <p style="margin-top:6px">👇 点击下方按钮添加微信付款</p>
+    <a class="wechat-contact" href="#">💬 添加微信：138-xxxx-xxxx</a>
+    <p style="margin-top:10px;font-size:11px;color:#9a948a">加好友时请备注"翻新" + 您的姓名</p>
+  </div>
+
+  <p style="font-size:12px;color:#9a948a">我们收到付款后即开始翻新，工期约3-5天</p>
+  <a class="back-link" href="./翻新流程说明.html">← 返回流程说明</a>
+</div>
+
+</div>
+</div>
+
+<script>
+// ========== 商品选择 ==========
+let selectedProduct = { name: '标准双人翻新羽绒被', price: 780, desc: '2.0m×2.3m' };
+let quantity = 1;
+let addonFabric = false;
+let addonDown = false;
+
+document.querySelectorAll('.product-card').forEach(el => {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedProduct = {
+      name: this.dataset.name,
+      price: parseInt(this.dataset.price),
+      desc: this.dataset.desc
+    };
+    calcTotal();
+  });
+});
+
+document.getElementById('qtyMinus').addEventListener('click', () => {
+  if (quantity > 1) { quantity--; document.getElementById('qtyDisplay').textContent = quantity; calcTotal(); }
+});
+document.getElementById('qtyPlus').addEventListener('click', () => {
+  if (quantity < 20) { quantity++; document.getElementById('qtyDisplay').textContent = quantity; calcTotal(); }
+});
+document.getElementById('addonFabric').addEventListener('change', function() { addonFabric = this.checked; calcTotal(); });
+document.getElementById('addonDown').addEventListener('change', function() { addonDown = this.checked; calcTotal(); });
+
+function calcTotal() {
+  let total = selectedProduct.price * quantity;
+  if (addonFabric) total += 100;
+  if (addonDown) total += 120;
+  document.getElementById('totalAmount').innerHTML = total + ' <span class="u">元</span>';
+}
+
+// ========== 提交订单 ==========
+document.getElementById('submitBtn').addEventListener('click', function() {
+  const name = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  const province = document.getElementById('inputProvince').value;
+  const city = document.getElementById('inputCity').value.trim();
+  const district = document.getElementById('inputDistrict').value.trim();
+  const address = document.getElementById('inputAddress').value.trim();
+  const note = document.getElementById('inputNote').value.trim();
+
+  if (!name) { alert('请填写收件人姓名'); return; }
+  if (!phone || !/^1\d{10}$/.test(phone)) { alert('请填写正确的手机号'); return; }
+  if (!province) { alert('请选择省份'); return; }
+  if (!city) { alert('请填写城市'); return; }
+  if (!district) { alert('请填写区/县'); return; }
+  if (!address) { alert('请填写详细地址'); return; }
+
+  const total = (selectedProduct.price * quantity) + (addonFabric ? 100 : 0) + (addonDown ? 120 : 0);
+
+  // 生成订单摘要
+  let summaryHtml = '';
+  summaryHtml += `<strong>商品：</strong>${selectedProduct.name} × ${quantity}<br>`;
+  summaryHtml += `<strong>规格：</strong>${selectedProduct.desc}<br>`;
+  if (addonFabric) summaryHtml += `<strong>升级：</strong>面料升级 +100元<br>`;
+  if (addonDown) summaryHtml += `<strong>补充：</strong>补充新羽绒500g +120元<br>`;
+  summaryHtml += `<strong>金额：</strong>${total}元<br>`;
+  summaryHtml += `<strong>收货人：</strong>${name}<br>`;
+  summaryHtml += `<strong>电话：</strong>${phone}<br>`;
+  summaryHtml += `<strong>地址：</strong>${province} ${city} ${district} ${address}<br>`;
+  if (note) summaryHtml += `<strong>备注：</strong>${note}`;
+
+  document.getElementById('orderSummary').innerHTML = summaryHtml;
+  document.getElementById('payAmount').textContent = total + '元';
+
+  // 切换页面
+  document.getElementById('formPage').classList.add('hidden');
+  document.getElementById('resultPage').classList.add('active');
+
+  // 添加到URL hash以便刷新
+  window.location.hash = '#ordered';
+});
+
+// 如果直接访问带#ordered，显示结果
+if (window.location.hash === '#ordered') {
+  document.getElementById('formPage').classList.add('hidden');
+  document.getElementById('resultPage').classList.add('active');
+}
+</script>
+</body>
+</html>
